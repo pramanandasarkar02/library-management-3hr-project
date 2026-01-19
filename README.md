@@ -16,3 +16,23 @@ stack
 - golang backend 
 - typescript frontend (vite)
 
+
+
+
+
+
+
+
+## database set up 
+```bash
+docker run -d --name library_cassandra_db -p 9042:9042 cassandra:latest
+
+```
+
+
+
+
+
+
+## follwing tutorial and resources
+1. https://medium.com/nerd-for-tech/experiment-go-webapp-with-cassandra-db-on-docker-f3b12226b609 
