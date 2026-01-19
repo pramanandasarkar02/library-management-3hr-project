@@ -2,11 +2,14 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
+	"pramanandasarkar02/library-management/internal"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gocql/gocql"
 )
@@ -38,6 +41,8 @@ var BookDbColumn = []string{
 	"num_pages",
 	"ratings_count",
 }
+
+var DataReadSession *gocql.Session
 
 func insert_csv_data(session *gocql.Session) {
 	file, err := os.Open("./data/data.csv")
@@ -101,8 +106,8 @@ func insert_csv_data(session *gocql.Session) {
 		}
 		booksCount += 1
 	}
-	session.Close()
-	fmt.Println("Books Count: ", booksCount)
+	DataReadSession = session
+	log.Println("Inserted Books Count: ", booksCount)
 
 }
 
@@ -162,7 +167,7 @@ func init_db() {
 			published_year int,
 			average_rating float,
 			num_pages int,
-			ratings_count int,
+			ratings_count int
 		)
 	`).Exec()
 
@@ -171,11 +176,86 @@ func init_db() {
 	}
 
 	insert_csv_data(session)
+	session.Close()
 
+	DataReadSession, err = cluster.CreateSession()
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	log.Println("Database Initialize.....")
+}
+
+
+
+func getBooks(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	
+	var books []internal.Book
+	iter := DataReadSession.Query(`
+		SELECT 
+			isbn,
+			title,
+			subtitle,
+			authors,
+			categories,
+			thumbnail,
+			description,
+			published_year,
+			average_rating,
+			num_pages,
+			ratings_count
+		FROM books;
+	`).Iter()
+
+	var book internal.Book
+	for iter.Scan(
+		&book.ISBN,
+		&book.Title,
+		&book.SubTitle,
+		&book.Authors,
+		&book.Categories,
+		&book.Thumbnail,
+		&book.Description,
+		&book.PublishedYear,
+		&book.AverageRating,
+		&book.NumPages,
+		&book.RatingCount,
+	) {
+		books = append(books, book)
+	}
+
+	if err := iter.Close(); err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return 
+	}
+
+
+	json.NewEncoder(w).Encode(books)
+}
+
+
+func startServer(wg *sync.WaitGroup){
+	defer wg.Done()
+	http.HandleFunc("/books", getBooks)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
-
 	init_db()
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	
+
+
+
+	go startServer(&wg)
+
+	wg.Wait()
+	
 }
