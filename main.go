@@ -116,6 +116,7 @@ func init_db() {
 	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Port = 9042
 	cluster.Consistency = gocql.Quorum
+	
 
 	// create session
 	session, err := cluster.CreateSession()
@@ -189,6 +190,7 @@ func init_db() {
 
 
 func getBooks(w http.ResponseWriter, r *http.Request){
+	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
 	
 	var books []internal.Book
@@ -233,7 +235,11 @@ func getBooks(w http.ResponseWriter, r *http.Request){
 
 	json.NewEncoder(w).Encode(books)
 }
-
+func enableCors(w *http.ResponseWriter) {
+(*w).Header().Set("Access-Control-Allow-Origin", "*")
+(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+}
 
 func startServer(wg *sync.WaitGroup){
 	defer wg.Done()
