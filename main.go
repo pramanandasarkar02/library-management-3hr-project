@@ -15,7 +15,6 @@ import (
 )
 
 var BooksDataColumn = []string{
-	"isbn13",
 	"isbn10",
 	"title",
 	"subtitle",
@@ -32,8 +31,8 @@ var BookDbColumn = []string{
 	"isbn", //isbn10
 	"title",
 	"subtitle",
-	"authors",    // now keep it as list
-	"categories", // keep it as list
+	"authors",    
+	"categories", 
 	"thumbnail",
 	"description",
 	"published_year",
@@ -45,7 +44,7 @@ var BookDbColumn = []string{
 var DataReadSession *gocql.Session
 
 func insert_csv_data(session *gocql.Session) {
-	file, err := os.Open("./data/data.csv")
+	file, err := os.Open("./data/processed_data.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +61,7 @@ func insert_csv_data(session *gocql.Session) {
 			continue
 		}
 
-		values := strings.Split(line, ",")
+		values := strings.Split(line, "℧")
 		insertQuery := `
 		INSERT INTO books (
 			isbn,
@@ -78,23 +77,21 @@ func insert_csv_data(session *gocql.Session) {
 			ratings_count
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-		authorList := strings.Split(values[4], " ")
-		categoryList := strings.Split(values[5], " ")
-		publishedYear, _ := strconv.Atoi(values[8])
-		avgRatingFloat64, _ := strconv.ParseFloat(values[9], 32)
-		numPages, _ := strconv.Atoi(values[10])
-		ratingCount, _ := strconv.Atoi(values[11])
+		publishedYear, _ := strconv.Atoi(values[7])
+		avgRatingFloat64, _ := strconv.ParseFloat(values[8], 32)
+		numPages, _ := strconv.Atoi(values[9])
+		ratingCount, _ := strconv.Atoi(values[10])
 
 		avgRating := float32(avgRatingFloat64)
 
 		err = session.Query(insertQuery).Bind(
+			values[0],
 			values[1],
 			values[2],
 			values[3],
-			authorList,
-			categoryList,
+			values[4],
+			values[5],
 			values[6],
-			values[7],
 			publishedYear,
 			avgRating,
 			numPages,
@@ -161,8 +158,8 @@ func init_db() {
 			isbn text primary key,
 			title text,
 			subtitle text,
-			authors list<text>,
-			categories list<text>,
+			authors text,
+			categories text,
 			thumbnail text,
 			description text,
 			published_year int,

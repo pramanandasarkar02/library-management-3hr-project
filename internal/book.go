@@ -3,8 +3,8 @@ type Book struct {
 	ISBN string `json:"isbn"`;
 	Title string `json:"title"`;
 	SubTitle string `json:"subTitle"`;
-	Authors []string `json:"authors"`;
-	Categories []string `json:"categories"`;
+	Authors string `json:"authors"`;
+	Categories string `json:"categories"`;
 	Thumbnail string `json:"thumbnail"`;
 	Description string `json:"description"`;
 	PublishedYear int `json:"publishedYear"`;
@@ -13,7 +13,7 @@ type Book struct {
 	RatingCount int `json:"ratingCount"`;
 }
 
-func NewBook(isbn, title, subtitle, thumbnail, description string, publishYear, numPages, ratingCount int, avgRating float32, authors, categories []string) *Book{
+func NewBook(isbn, title, subtitle, thumbnail, description string, publishYear, numPages, ratingCount int, avgRating float32, authors, categories string) *Book{
 	return &Book{
 		ISBN: isbn,
 		Title: title,
